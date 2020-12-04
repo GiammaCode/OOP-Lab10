@@ -12,8 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import it.unibo.oop.lab.reactivegui01.ConcurrentGUI;
-import it.unibo.oop.lab.reactivegui01.ConcurrentGUI.Agent;
+
 
 public class ConcurrentGUI extends JFrame {
     
@@ -47,6 +46,31 @@ public class ConcurrentGUI extends JFrame {
         final Agent agent = new Agent();
         new Thread(agent).start();
         
+        stop.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(final ActionEvent e) {
+                // Agent should be final
+                agent.stopCounting();
+            }
+        });
+        
+        up.addActionListener(new ActionListener(){
+
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                agent.upCount();
+            }
+            
+        });
+        
+        down.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+               agent.downCount();   
+            }
+            
+        });
         
         
     }
@@ -54,17 +78,22 @@ public class ConcurrentGUI extends JFrame {
     private class Agent implements Runnable{
         private volatile boolean stop;
         private volatile int counter;
+        private volatile boolean down;
+        private volatile boolean up; 
+        
 
-        @Override
         public void run() {
             while (!this.stop) {
                 try {
-                    /*
-                     * All the operations on the GUI must be performed by the
-                     * Event-Dispatch Thread (EDT)!
-                     */
+                   
                     SwingUtilities.invokeAndWait(() -> ConcurrentGUI.this.display.setText(Integer.toString(Agent.this.counter)));
-                    this.counter++;
+                    if(this.up == true && this.down == false) {
+                      this.counter++;
+                    }
+                    if(this.up == false && this.down == true ) {
+                      this.counter--;
+                      
+                    }
                     Thread.sleep(100);
                 } catch (InvocationTargetException | InterruptedException ex) {
                     /*
@@ -81,8 +110,21 @@ public class ConcurrentGUI extends JFrame {
          */
         public void stopCounting() {
             this.stop = true;
+        } 
+        
+        /**
+         *command to up counting 
+         */
+        public void upCount() {
+            this.up = true;
+            this.down = false;
         }
+        
+        public void downCount() {
+            this.up = false;
+            this.down = true;
+        }
+        
     }
-    
 }
 
