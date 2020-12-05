@@ -7,14 +7,12 @@ import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import it.unibo.oop.lab.reactivegui02.ConcurrentGUI;
-import it.unibo.oop.lab.reactivegui02.ConcurrentGUI.Agent;
-
-public class AnotherConcurrentGUI {
+public class AnotherConcurrentGUI extends JFrame{
     
     private static final long serialVersionUID = 1L;
     private static final double WIDTH_PERC = 0.2;
@@ -26,9 +24,10 @@ public class AnotherConcurrentGUI {
     private final JLabel display = new JLabel();
     
     
+    
     public AnotherConcurrentGUI() {
-super();
-        
+        super();
+ 
         //set size
         final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         this.setSize((int) (screenSize.getWidth() * WIDTH_PERC), (int) (screenSize.getHeight() * HEIGHT_PERC));
@@ -43,14 +42,14 @@ super();
         panel.add(up);
         this.setVisible(true);
         
-        //create a counter 
+        //create  Thread 
         final Agent agent = new Agent();
-        new Thread(agent).start();
-        
+        final Thread anotherThread = new Thread(agent);
+        anotherThread.start();
+                        
         stop.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
-                // Agent should be final
                 agent.stopCounting();
             }
         });
@@ -75,18 +74,24 @@ super();
         
     }
     
-    private class Agent implements Runnable{
+  public class Agent implements Runnable{
         private volatile boolean stop;
         private volatile int counter;
         private volatile boolean down;
-        private volatile boolean up; 
+        private volatile boolean up;     
+        private volatile int time;
+        private final static int LIMIT = 100; //val expressed in millisec
         
-
         public void run() {
             while (!this.stop) {
                 try {
                    
-                    SwingUtilities.invokeAndWait(() -> ConcurrentGUI.this.display.setText(Integer.toString(Agent.this.counter)));
+                    SwingUtilities.invokeAndWait(() -> AnotherConcurrentGUI.this.display.setText(Integer.toString(Agent.this.counter)));
+                    time++;
+                    if(this.time == LIMIT) {
+                        System.out.println("time limit: " + time/10 + "sec");
+                        this.stopCounting();
+                    }
                     if(this.up == true && this.down == false) {
                       this.counter++;
                     }
@@ -96,25 +101,18 @@ super();
                     }
                     Thread.sleep(100);
                 } catch (InvocationTargetException | InterruptedException ex) {
-                    /*
-                     * This is just a stack trace print, in a real program there
-                     * should be some logging and decent error reporting
-                     */
                     ex.printStackTrace();
                 }
             }
-        }
-
+        } 
+             
         /**
          * External command to stop counting.
          */
         public void stopCounting() {
             this.stop = true;
-        } 
-        
-        /**
-         *command to up counting 
-         */
+        }      
+       //external method to up/down counting.
         public void upCount() {
             this.up = true;
             this.down = false;
@@ -125,5 +123,6 @@ super();
             this.down = true;
         }
         
-    }
+    }  
+    
 }
